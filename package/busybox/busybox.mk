@@ -44,6 +44,9 @@ define BUSYBOX_INSTALL_MDEV_CONF
 	[ -f $(TARGET_DIR)/etc/mdev.conf ] || \
 		install -D -m 0644 package/busybox/mdev.conf \
 			$(TARGET_DIR)/etc/mdev.conf
+
+	install -D -m 0777 package/busybox/disk.sh \
+		$(TARGET_DIR)/etc/mdev.d/disk.sh
 endef
 define BUSYBOX_SET_MDEV
 	$(call KCONFIG_ENABLE_OPT,CONFIG_MDEV,$(BUSYBOX_BUILD_CONFIG))

@@ -7,7 +7,8 @@ export PATH=\
 /usr/sbin:\
 /usr/bin/X11:\
 /usr/local/bin
-
+PS1=1
+BASH=1
 # If running interactively, then:
 if [ "$PS1" ]; then
 
