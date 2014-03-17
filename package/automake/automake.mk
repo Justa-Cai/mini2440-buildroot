@@ -1,13 +1,14 @@
-#############################################################
+################################################################################
 #
 # automake
 #
-#############################################################
-AUTOMAKE_VERSION = 1.11.1
-AUTOMAKE_SOURCE = automake-$(AUTOMAKE_VERSION).tar.bz2
-AUTOMAKE_SITE = $(BR2_GNU_MIRROR)/automake
+################################################################################
 
-AUTOMAKE_DEPENDENCIES = host-autoconf autoconf microperl
+AUTOMAKE_VERSION = 1.14.1
+AUTOMAKE_SOURCE = automake-$(AUTOMAKE_VERSION).tar.xz
+AUTOMAKE_SITE = $(BR2_GNU_MIRROR)/automake
+AUTOMAKE_LICENSE = GPLv2+
+AUTOMAKE_LICENSE_FILES = COPYING
 
 HOST_AUTOMAKE_DEPENDENCIES = host-autoconf
 
@@ -23,8 +24,7 @@ endef
 HOST_AUTOMAKE_POST_INSTALL_HOOKS += GTK_DOC_M4_INSTALL
 HOST_AUTOMAKE_POST_INSTALL_HOOKS += HOST_AUTOMAKE_MAKE_ACLOCAL
 
-$(eval $(call AUTOTARGETS))
-$(eval $(call AUTOTARGETS,host))
+$(eval $(host-autotools-package))
 
 # variables used by other packages
 AUTOMAKE = $(HOST_DIR)/usr/bin/automake

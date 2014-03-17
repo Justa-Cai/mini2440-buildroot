@@ -1,11 +1,14 @@
-#############################################################
+################################################################################
 #
 # libplayer
 #
-#############################################################
+################################################################################
+
 LIBPLAYER_VERSION = 2.0.1
 LIBPLAYER_SITE = http://libplayer.geexbox.org/releases/
 LIBPLAYER_SOURCE = libplayer-$(LIBPLAYER_VERSION).tar.bz2
+LIBPLAYER_LICENSE = LGPLv2.1+
+LIBPLAYER_LICENSE_FILES = COPYING
 
 # When passing the standard buildroot configure arguments, the configure script
 # breaks on --target and --host options. Thus we need to define a configure cmd
@@ -18,7 +21,7 @@ define LIBPLAYER_CONFIGURE_CMDS
 		--prefix=/usr \
 		--cross-compile \
 		$(SHARED_STATIC_LIBS_OPTS) \
-		$(QUIET) $(LIBPLAYER_CONF_OPT) \
+		$(LIBPLAYER_CONF_OPT) \
 	)
 endef
 
@@ -41,4 +44,4 @@ ifeq ($(BR2_PACKAGE_LIBPLAYER_PYTHON),y)
 	LIBPLAYER_CONF_OPT += --enable-binding-python
 endif
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

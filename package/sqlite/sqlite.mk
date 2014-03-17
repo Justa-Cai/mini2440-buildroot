@@ -1,12 +1,13 @@
-#############################################################
+################################################################################
 #
 # sqlite
 #
-#############################################################
+################################################################################
 
-SQLITE_VERSION = 3071100
+SQLITE_VERSION = 3080401
 SQLITE_SOURCE = sqlite-autoconf-$(SQLITE_VERSION).tar.gz
-SQLITE_SITE = http://www.sqlite.org
+SQLITE_SITE = http://www.sqlite.org/2014
+SQLITE_LICENSE = Public domain
 SQLITE_INSTALL_STAGING = YES
 
 ifneq ($(BR2_LARGEFILE),y)
@@ -20,11 +21,36 @@ ifeq ($(BR2_PACKAGE_SQLITE_STAT3),y)
 SQLITE_CFLAGS += -DSQLITE_ENABLE_STAT3
 endif
 
+ifeq ($(BR2_PACKAGE_SQLITE_ENABLE_FTS3),y)
+SQLITE_CFLAGS += -DSQLITE_ENABLE_FTS3
+endif
+
+ifeq ($(BR2_PACKAGE_SQLITE_ENABLE_UNLOCK_NOTIFY),y)
+SQLITE_CFLAGS += -DSQLITE_ENABLE_UNLOCK_NOTIFY
+endif
+
+ifeq ($(BR2_PACKAGE_SQLITE_SECURE_DELETE),y)
+SQLITE_CFLAGS += -DSQLITE_SECURE_DELETE
+endif
+
+ifeq ($(BR2_xtensa),y)
+SQLITE_CFLAGS += -mtext-section-literals
+endif
+
 SQLITE_CONF_ENV = CFLAGS="$(TARGET_CFLAGS) $(SQLITE_CFLAGS)"
 
 SQLITE_CONF_OPT = \
-	--enable-threadsafe \
 	--localstatedir=/var
+
+ifeq ($(BR2_PREFER_STATIC_LIB),y)
+SQLITE_CONF_OPT += --enable-dynamic-extensions=no
+endif
+
+ifeq ($(BR2_TOOLCHAIN_HAS_THREADS),y)
+SQLITE_CONF_OPT += --enable-threadsafe
+else
+SQLITE_CONF_OPT += --disable-threadsafe
+endif
 
 ifeq ($(BR2_PACKAGE_SQLITE_READLINE),y)
 SQLITE_DEPENDENCIES += ncurses readline
@@ -33,16 +59,4 @@ else
 SQLITE_CONF_OPT += --disable-readline
 endif
 
-define SQLITE_UNINSTALL_TARGET_CMDS
-	rm -f $(TARGET_DIR)/usr/bin/sqlite3
-	rm -f $(TARGET_DIR)/usr/lib/libsqlite3*
-endef
-
-define SQLITE_UNINSTALL_STAGING_CMDS
-	rm -f $(STAGING_DIR)/usr/bin/sqlite3
-	rm -f $(STAGING_DIR)/usr/lib/libsqlite3*
-	rm -f $(STAGING_DIR)/usr/lib/pkgconfig/sqlite3.pc
-	rm -f $(STAGING_DIR)/usr/include/sqlite3*.h
-endef
-
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

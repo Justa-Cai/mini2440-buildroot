@@ -1,11 +1,13 @@
-#############################################################
+################################################################################
 #
 # logrotate
 #
-#############################################################
-LOGROTATE_VERSION = 3.7.9
-LOGROTATE_SOURCE = logrotate-$(LOGROTATE_VERSION).tar.gz
-LOGROTATE_SITE = https://fedorahosted.org/releases/l/o/logrotate/
+################################################################################
+
+LOGROTATE_VERSION = 3.8.7
+LOGROTATE_SITE = https://www.fedorahosted.org/releases/l/o/logrotate/
+LOGROTATE_LICENSE = GPLv2+
+LOGROTATE_LICENSE_FILES = COPYING
 
 LOGROTATE_DEPENDENCIES = popt
 
@@ -21,16 +23,4 @@ define LOGROTATE_INSTALL_TARGET_CMDS
 	$(INSTALL) -d -m 0755 $(TARGET_DIR)/etc/logrotate.d
 endef
 
-define LOGROTATE_UNINSTALL_TARGET_CMDS
-	rm -f $(TARGET_DIR)/usr/sbin/logrotate
-	rm -f $(TARGET_DIR)/etc/logrotate.conf
-	rm -f $(TARGET_DIR)/usr/man/man5/logrotate.conf.5
-	rm -f $(TARGET_DIR)/usr/man/man8/logrotate.8
-	rmdir --ignore-fail-on-non-empty $(TARGET_DIR)/etc/logrotate.d
-endef
-
-define LOGROTATE_CLEAN_CMDS
-	-$(MAKE) -C $(@D) clean
-endef
-
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))

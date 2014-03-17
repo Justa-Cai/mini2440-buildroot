@@ -1,28 +1,24 @@
-#############################################################
+################################################################################
 #
 # transmission
 #
-#############################################################
-TRANSMISSION_VERSION = 2.33
+################################################################################
+
+TRANSMISSION_VERSION = 2.82
 TRANSMISSION_SITE = http://download.transmissionbt.com/files/
-TRANSMISSION_SOURCE = transmission-$(TRANSMISSION_VERSION).tar.bz2
+TRANSMISSION_SOURCE = transmission-$(TRANSMISSION_VERSION).tar.xz
 TRANSMISSION_DEPENDENCIES = \
-	host-pkg-config \
+	host-pkgconf \
 	host-intltool \
 	libcurl \
 	libevent \
 	openssl \
 	zlib
+TRANSMISSION_AUTORECONF = YES
 
 TRANSMISSION_CONF_OPT = \
 	--disable-libnotify \
 	--enable-lightweight
-
-define TRANSMISSION_INIT_SCRIPT_INSTALL
-	[ -f $(TARGET_DIR)/etc/init.d/S92transmission ] || \
-		$(INSTALL) -m 0755 -D package/transmission/S92transmission \
-			$(TARGET_DIR)/etc/init.d/S92transmission
-endef
 
 ifeq ($(BR2_PACKAGE_TRANSMISSION_UTP),y)
 	TRANSMISSION_CONF_OPT += --enable-utp
@@ -38,7 +34,13 @@ endif
 
 ifeq ($(BR2_PACKAGE_TRANSMISSION_DAEMON),y)
 	TRANSMISSION_CONF_OPT += --enable-daemon
-	TRANSMISSION_POST_INSTALL_TARGET_HOOKS += TRANSMISSION_INIT_SCRIPT_INSTALL
+
+define TRANSMISSION_INSTALL_INIT_SYSV
+	[ -f $(TARGET_DIR)/etc/init.d/S92transmission ] || \
+		$(INSTALL) -m 0755 -D package/transmission/S92transmission \
+			$(TARGET_DIR)/etc/init.d/S92transmission
+endef
+
 else
 	TRANSMISSION_CONF_OPT += --disable-daemon
 endif
@@ -56,4 +58,4 @@ else
 	TRANSMISSION_CONF_OPT += --disable-gtk
 endif
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

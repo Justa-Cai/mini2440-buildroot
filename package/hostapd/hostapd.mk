@@ -1,99 +1,84 @@
-##############################################################
+################################################################################
 #
 # hostapd
 #
-#############################################################
+################################################################################
 
-HOSTAPD_VERSION = 0.7.3
+HOSTAPD_VERSION = 2.1
 HOSTAPD_SITE = http://hostap.epitest.fi/releases
 HOSTAPD_SUBDIR = hostapd
 HOSTAPD_CONFIG = $(HOSTAPD_DIR)/$(HOSTAPD_SUBDIR)/.config
 HOSTAPD_DEPENDENCIES = libnl
-HOSTAPD_LDFLAGS = $(TARGET_LDFLAGS)
+HOSTAPD_CFLAGS = $(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/libnl3/
+HOSTAPD_LICENSE = GPLv2/BSD-3c
+HOSTAPD_LICENSE_FILES = README
+HOSTAPD_CONFIG_SET =
 
-# libnl needs -lm (for rint) if linking statically
+HOSTAPD_CONFIG_ENABLE = \
+	CONFIG_ACS \
+	CONFIG_FULL_DYNAMIC_VLAN \
+	CONFIG_HS20 \
+	CONFIG_IEEE80211AC \
+	CONFIG_IEEE80211N \
+	CONFIG_IEEE80211R \
+	CONFIG_IEEE80211W \
+	CONFIG_INTERNAL_LIBTOMMATH \
+	CONFIG_INTERWORKING \
+	CONFIG_LIBNL32 \
+	CONFIG_VLAN_NETLINK
+
+HOSTAPD_CONFIG_DISABLE =
+
+# libnl-3 needs -lm (for rint) and -lpthread if linking statically
+# And library order matters hence stick -lnl-3 first since it's appended
+# in the hostapd Makefiles as in LIBS+=-lnl-3 ... thus failing
 ifeq ($(BR2_PREFER_STATIC_LIB),y)
-HOSTAPD_LDFLAGS += -lm
+HOSTAPD_LIBS += -lnl-3 -lm -lpthread
 endif
 
-define HOSTAPD_LIBNL_CONFIG
-	echo "CONFIG_LIBNL20=y" >>$(HOSTAPD_CONFIG)
-	echo "CFLAGS += -I$(STAGING_DIR)/usr/include/libnl3/" >>$(HOSTAPD_CONFIG)
-endef
+ifeq ($(BR2_INET_IPV6),)
+	HOSTAPD_CONFIG_DISABLE += CONFIG_IPV6
+endif
 
-define HOSTAPD_CRYPTO_CONFIG
-	echo "CONFIG_CRYPTO=internal" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_INTERNAL_LIBTOMMATH=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_INTERNAL_LIBTOMMATH_FAST=y" >>$(HOSTAPD_CONFIG)
-endef
-
-# Try to use openssl for TLS if it's already available
-# gnutls is also supported for TLS
+# Try to use openssl if it's already available
 ifeq ($(BR2_PACKAGE_OPENSSL),y)
 	HOSTAPD_DEPENDENCIES += openssl
-define HOSTAPD_TLS_CONFIG
-	echo "CONFIG_TLS=openssl" >>$(HOSTAPD_CONFIG)
-endef
+	HOSTAPD_LIBS += $(if $(BR2_PREFER_STATIC_LIB),-lcrypto -lz)
+	HOSTAPD_CONFIG_EDITS += 's/\#\(CONFIG_TLS=openssl\)/\1/'
 else
-define HOSTAPD_TLS_CONFIG
-	echo "CONFIG_TLS=internal" >>$(HOSTAPD_CONFIG)
-endef
+	HOSTAPD_CONFIG_DISABLE += CONFIG_EAP_PWD
+	HOSTAPD_CONFIG_EDITS += 's/\#\(CONFIG_TLS=\).*/\1internal/'
 endif
 
 ifeq ($(BR2_PACKAGE_HOSTAPD_EAP),y)
-define HOSTAPD_EAP_CONFIG
-	$(SED) "s/CONFIG_EAP_MSCHAPV2=y//" $(HOSTAPD_CONFIG)
-	$(SED) "s/CONFIG_EAP_PEAP=y//" $(HOSTAPD_CONFIG)
-	$(SED) "s/CONFIG_EAP_TLS=y//" $(HOSTAPD_CONFIG)
-	$(SED) "s/CONFIG_EAP_TTLS=y//" $(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_AKA=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_AKA_PRIME=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_GPSK=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_GPSK_SHA256=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_PAX=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_PSK=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_SAKE=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_EAP_SIM=y" >>$(HOSTAPD_CONFIG)
-	echo "CONFIG_RADIUS_SERVER=y" >>$(HOSTAPD_CONFIG)
-endef
-ifeq ($(BR2_INET_IPV6),y)
-define HOSTAPD_RADIUS_IPV6_CONFIG
-	$(SED) "s/^#CONFIG_IPV6/CONFIG_IPV6/" $(HOSTAPD_CONFIG)
-endef
-endif
+	HOSTAPD_CONFIG_ENABLE += \
+		CONFIG_EAP \
+		CONFIG_RADIUS_SERVER \
+		CONFIG_TLSV1
 else
-define HOSTAPD_EAP_CONFIG
-	$(SED) "s/^CONFIG_EAP/#CONFIG_EAP/g" $(HOSTAPD_CONFIG)
-	$(SED) "s/^#CONFIG_NO_ACCOUNTING/CONFIG_NO_ACCOUNTING/" $(HOSTAPD_CONFIG)
-	$(SED) "s/^#CONFIG_NO_RADIUS/CONFIG_NO_RADIUS/" $(HOSTAPD_CONFIG)
-endef
+	HOSTAPD_CONFIG_DISABLE += CONFIG_EAP
+	HOSTAPD_CONFIG_ENABLE += \
+		CONFIG_NO_ACCOUNTING \
+		CONFIG_NO_RADIUS
 endif
 
 ifeq ($(BR2_PACKAGE_HOSTAPD_WPS),y)
-define HOSTAPD_WPS_CONFIG
-	$(SED) "s/^#CONFIG_WPS/CONFIG_WPS/g" $(HOSTAPD_CONFIG)
-endef
+	HOSTAPD_CONFIG_ENABLE += CONFIG_WPS
 endif
 
 define HOSTAPD_CONFIGURE_CMDS
-	cp $(@D)/$(HOSTAPD_SUBDIR)/defconfig $(HOSTAPD_CONFIG)
-	$(SED) "s/\/local//" $(@D)/$(HOSTAPD_SUBDIR)/Makefile
-	echo "CFLAGS += $(TARGET_CFLAGS)" >>$(HOSTAPD_CONFIG)
-	echo "LDFLAGS += $(HOSTAPD_LDFLAGS)" >>$(HOSTAPD_CONFIG)
-	echo "CC = $(TARGET_CC)" >>$(HOSTAPD_CONFIG)
-# Drivers
-	$(SED) "s/^#CONFIG_DRIVER_WIRED/CONFIG_DRIVER_WIRED/" $(HOSTAPD_CONFIG)
-	$(SED) "s/^#CONFIG_DRIVER_NL80211/CONFIG_DRIVER_NL80211/" $(HOSTAPD_CONFIG)
-# Misc
-	$(SED) "s/^CONFIG_IPV6/#CONFIG_IPV6/" $(HOSTAPD_CONFIG)
-	$(SED) "s/^#CONFIG_IEEE80211N/CONFIG_IEEE80211N/" $(HOSTAPD_CONFIG)
-	$(SED) "s/^#CONFIG_IEEE80211R/CONFIG_IEEE80211R/" $(HOSTAPD_CONFIG)
-	$(HOSTAPD_CRYPTO_CONFIG)
-	$(HOSTAPD_TLS_CONFIG)
-	$(HOSTAPD_RADIUS_IPV6_CONFIG)
-	$(HOSTAPD_EAP_CONFIG)
-	$(HOSTAPD_WPS_CONFIG)
-	$(HOSTAPD_LIBNL_CONFIG)
+	cp $(@D)/hostapd/defconfig $(HOSTAPD_CONFIG)
+	sed -i $(patsubst %,-e 's/^#\(%\)/\1/',$(HOSTAPD_CONFIG_ENABLE)) \
+		$(patsubst %,-e 's/^\(%\)/#\1/',$(HOSTAPD_CONFIG_DISABLE)) \
+		$(patsubst %,-e '1i%=y',$(HOSTAPD_CONFIG_SET)) \
+		$(patsubst %,-e %,$(HOSTAPD_CONFIG_EDITS)) \
+		$(HOSTAPD_CONFIG)
+endef
+
+define HOSTAPD_BUILD_CMDS
+	$(TARGET_MAKE_ENV) CFLAGS="$(HOSTAPD_CFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" LIBS="$(HOSTAPD_LIBS)" \
+		$(MAKE) CC="$(TARGET_CC)" -C $(@D)/$(HOSTAPD_SUBDIR)
 endef
 
 define HOSTAPD_INSTALL_TARGET_CMDS
@@ -103,9 +88,4 @@ define HOSTAPD_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/usr/bin/hostapd_cli
 endef
 
-define HOSTAPD_UNINSTALL_TARGET_CMDS
-	rm -f $(TARGET_DIR)/usr/sbin/hostapd
-	rm -f $(TARGET_DIR)/usr/bin/hostapd
-endef
-
-$(eval $(call AUTOTARGETS))
+$(eval $(generic-package))

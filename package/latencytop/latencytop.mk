@@ -1,8 +1,8 @@
-#############################################################
+################################################################################
 #
 # latencytop
 #
-#############################################################
+################################################################################
 
 LATENCYTOP_VERSION = 0.5
 LATENCYTOP_SITE = http://www.latencytop.org/download/
@@ -18,4 +18,4 @@ define LATENCYTOP_INSTALL_TARGET_CMDS
 	$(MAKE) install -C $(@D) DESTDIR=$(TARGET_DIR) HAS_GTK_GUI=
 endef
 
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))

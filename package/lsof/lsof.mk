@@ -1,12 +1,16 @@
-#############################################################
+################################################################################
 #
 # lsof
 #
-#############################################################
+################################################################################
 
 LSOF_VERSION = 4.85
 LSOF_SOURCE = lsof_$(LSOF_VERSION).tar.bz2
 LSOF_SITE = ftp://lsof.itap.purdue.edu/pub/tools/unix/lsof/
+LSOF_LICENSE = lsof license
+# License is repeated in each file, this is a relatively small one.
+# It is also defined in 00README, but that contains a lot of other cruft.
+LSOF_LICENSE_FILES = dialects/linux/dproto.h
 
 # Make certain full-blown lsof gets built after the busybox version (1.20+)
 LSOF_DEPENDENCIES += $(if $(BR2_PACKAGE_BUSYBOX),busybox)
@@ -37,7 +41,7 @@ endif
 
 # The .tar.bz2 contains another .tar, which contains the source code.
 define LSOF_EXTRACT_CMDS
-        $(INFLATE.bz2) $(DL_DIR)/$(LSOF_SOURCE) | \
+        $(call suitable-extractor,$(LSOF_SOURCE)) $(DL_DIR)/$(LSOF_SOURCE) | \
                 $(TAR) -O $(TAR_OPTIONS) - lsof_$(LSOF_VERSION)/lsof_$(LSOF_VERSION)_src.tar | \
         $(TAR) $(TAR_STRIP_COMPONENTS)=1 -C $(LSOF_DIR) $(TAR_OPTIONS) -
 endef
@@ -58,12 +62,4 @@ define LSOF_INSTALL_TARGET_CMDS
 	install -D -m 755 $(@D)/lsof $(TARGET_DIR)/bin/lsof
 endef
 
-define LSOF_UNINSTALL_TARGET_CMDS
-	rm -f $(TARGET_DIR)/bin/lsof
-endef
-
-define LSOF_CLEAN_CMDS
-	-$(MAKE) -C $(@D) clean
-endef
-
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))

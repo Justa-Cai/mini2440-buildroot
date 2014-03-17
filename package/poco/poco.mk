@@ -1,11 +1,15 @@
-#############################################################
+################################################################################
 #
 # poco
 #
-#############################################################
-POCO_VERSION = 1.4.3p1
+################################################################################
+
+POCO_VERSION_MAJOR = 1.4.6
+POCO_VERSION = $(POCO_VERSION_MAJOR)p1
 POCO_SOURCE = poco-$(POCO_VERSION)-all.tar.gz
-POCO_SITE = http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/poco
+POCO_SITE = http://downloads.sourceforge.net/project/poco/sources/poco-$(POCO_VERSION_MAJOR)
+POCO_LICENSE = Boost-v1.0
+POCO_LICENSE_FILES = LICENSE
 POCO_INSTALL_STAGING = YES
 
 POCO_DEPENDENCIES = zlib pcre					\
@@ -13,7 +17,7 @@ POCO_DEPENDENCIES = zlib pcre					\
 	$(if $(BR2_PACKAGE_POCO_CRYPTO),openssl)		\
 	$(if $(BR2_PACKAGE_POCO_NETSSL_OPENSSL),openssl)	\
 	$(if $(BR2_PACKAGE_POCO_DATA_SQLITE),sqlite)		\
-	$(if $(BR2_PACKAGE_POCO_DATA_MYSQL),mysql_client)
+	$(if $(BR2_PACKAGE_POCO_DATA_MYSQL),mysql)
 
 POCO_OMIT = Data/ODBC PageCompiler					\
 	$(if $(BR2_PACKAGE_POCO_XML),,XML)				\
@@ -30,6 +34,11 @@ ifeq ($(LIBC),uclibc)
 POCO_CONF_OPT += --no-fpenvironment --no-wstring
 endif
 
+# architectures missing some FE_* in their fenv.h
+ifeq ($(BR2_sh4a)$(BR2_nios2),y)
+POCO_CONF_OPT += --no-fpenvironment
+endif
+
 define POCO_CONFIGURE_CMDS
 	(cd $(@D); ./configure \
 		--config=Linux-CrossEnv	\
@@ -42,7 +51,7 @@ define POCO_CONFIGURE_CMDS
 endef
 
 define POCO_BUILD_CMDS
-	$(MAKE) POCO_TARGET_OSARCH=$(ARCH) CROSSENV=$(TARGET_CROSS) \
+	$(MAKE1) POCO_TARGET_OSARCH=$(ARCH) CROSSENV=$(TARGET_CROSS) \
 		MYSQL_LIBDIR=$(STAGING_DIR)/usr/lib/mysql \
 		MYSQL_INCDIR=$(STAGING_DIR)/usr/include/mysql -C $(@D)
 endef
@@ -55,4 +64,4 @@ define POCO_INSTALL_TARGET_CMDS
 	$(MAKE) DESTDIR=$(TARGET_DIR) POCO_TARGET_OSARCH=$(ARCH) install -C $(@D)
 endef
 
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))

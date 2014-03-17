@@ -1,12 +1,14 @@
-#############################################################
+################################################################################
 #
 # socat
 #
-#############################################################
+################################################################################
 
-SOCAT_VERSION = 2.0.0-b5
+SOCAT_VERSION = 2.0.0-b7
 SOCAT_SOURCE = socat-$(SOCAT_VERSION).tar.bz2
 SOCAT_SITE = http://www.dest-unreach.org/socat/download/
+SOCAT_LICENSE = GPLv2
+SOCAT_LICENSE_FILES = COPYING
 SOCAT_CONF_ENV = sc_cv_termios_ispeed=no \
 		 sc_cv_sys_crdly_shift=9 \
 		 sc_cv_sys_tabdly_shift=11 \
@@ -19,10 +21,22 @@ SOCAT_CONF_ENV = sc_cv_termios_ispeed=no \
 
 SOCAT_DEPENDENCIES = host-autoconf
 
+ifeq ($(BR2_PACKAGE_OPENSSL),y)
+	SOCAT_DEPENDENCIES += openssl
+else
+	SOCAT_CONF_OPT += --disable-openssl
+endif
+
+ifeq ($(BR2_PACKAGE_READLINE),y)
+	SOCAT_DEPENDENCIES += readline
+else
+	SOCAT_CONF_OPT += --disable-readline
+endif
+
 define SOCAT_RUN_AUTOCONF
 	(cd $(@D); $(HOST_DIR)/usr/bin/autoconf)
 endef
 
 SOCAT_PRE_CONFIGURE_HOOKS += SOCAT_RUN_AUTOCONF
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

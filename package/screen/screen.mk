@@ -1,11 +1,13 @@
-#############################################################
+################################################################################
 #
 # screen
 #
-#############################################################
+################################################################################
 
 SCREEN_VERSION = 4.0.3
 SCREEN_SITE = $(BR2_GNU_MIRROR)/screen
+SCREEN_LICENSE = GPLv2+
+SCREEN_LICENSE_FILES = COPYING
 SCREEN_DEPENDENCIES = ncurses
 SCREEN_CONF_ENV = ac_cv_header_elf_h=no ac_cv_header_dwarf_h=no \
 	CFLAGS="$(TARGET_CFLAGS) -DTERMINFO"
@@ -20,4 +22,4 @@ endef
 
 SCREEN_POST_INSTALL_TARGET_HOOKS += SCREEN_INSTALL_SCREENRC
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

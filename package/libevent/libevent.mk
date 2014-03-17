@@ -1,9 +1,10 @@
-#############################################################
+################################################################################
 #
 # libevent
 #
-#############################################################
-LIBEVENT_VERSION = 2.0.14
+################################################################################
+
+LIBEVENT_VERSION = 2.0.21
 LIBEVENT_SOURCE = libevent-$(LIBEVENT_VERSION)-stable.tar.gz
 LIBEVENT_SITE = https://github.com/downloads/libevent/libevent
 LIBEVENT_INSTALL_STAGING = YES
@@ -18,4 +19,5 @@ ifneq ($(BR2_PACKAGE_PYTHON),y)
 LIBEVENT_POST_INSTALL_TARGET_HOOKS += LIBEVENT_REMOVE_PYSCRIPT
 endif
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))
+$(eval $(host-autotools-package))

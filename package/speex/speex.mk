@@ -1,11 +1,14 @@
-#############################################################
+################################################################################
 #
 # speex
 #
-#############################################################
-SPEEX_VERSION=1.2rc1
-SPEEX_SOURCE=speex-$(SPEEX_VERSION).tar.gz
-SPEEX_SITE=http://downloads.us.xiph.org/releases/speex
+################################################################################
+
+SPEEX_VERSION = 1.2rc1
+SPEEX_SITE = http://downloads.us.xiph.org/releases/speex
+SPEEX_LICENSE = BSD-3c
+SPEEX_LICENSE_FILES = COPYING
+
 SPEEX_INSTALL_STAGING = YES
 SPEEX_DEPENDENCIES = libogg
 SPEEX_CONF_OPT = --with-ogg-libraries=$(STAGING_DIR)/usr/lib \
@@ -31,4 +34,4 @@ define SPEEX_BUILD_CMDS
 	$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_MAKE_OPT) -C $(@D)/$($(PKG)_SUBDIR)
 endef
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

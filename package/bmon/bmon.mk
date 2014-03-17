@@ -1,11 +1,10 @@
-#############################################################
+################################################################################
 #
 # bmon
 #
-#############################################################
+################################################################################
 
 BMON_VERSION = 2.1.0
-BMON_SOURCE = bmon-$(BMON_VERSION).tar.gz
 BMON_SITE = http://distfiles.gentoo.org/distfiles
 
 ifeq ($(BR2_PACKAGE_NCURSES),y)
@@ -25,8 +24,4 @@ ifneq ($(BR2_PREFER_STATIC_LIB),y)
 BMON_CONF_OPT += --disable-static
 endif
 
-define BMON_UNINSTALL_TARGET_CMDS
-	rm -f $(TARGET_DIR)/usr/bin/bmon
-endef
-
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

@@ -1,12 +1,16 @@
-#############################################################
+################################################################################
 #
 # liblockfile
 #
-#############################################################
-LIBLOCKFILE_VERSION=1.08
-LIBLOCKFILE_SOURCE:=liblockfile_$(LIBLOCKFILE_VERSION).orig.tar.gz
-LIBLOCKFILE_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/libl/liblockfile/
-LIBLOCKFILE_PATCH:=liblockfile_$(LIBLOCKFILE_VERSION)-4.debian.tar.bz2
+################################################################################
+
+LIBLOCKFILE_VERSION = 1.08
+LIBLOCKFILE_SOURCE = liblockfile_$(LIBLOCKFILE_VERSION).orig.tar.gz
+LIBLOCKFILE_SITE = $(BR2_DEBIAN_MIRROR)/debian/pool/main/libl/liblockfile/
+LIBLOCKFILE_PATCH = liblockfile_$(LIBLOCKFILE_VERSION)-4.debian.tar.bz2
+
+LIBLOCKFILE_LICENSE = LGPLv2+, dotlockfile GPLv2+
+# No license file included, it refers to the gnu.org website
 
 LIBLOCKFILE_INSTALL_STAGING = YES
 LIBLOCKFILE_CONF_OPT = --mandir=/usr/share/man
@@ -22,11 +26,4 @@ define LIBLOCKFILE_INSTALL_TARGET_CMDS
 	cp -a $(STAGING_DIR)/usr/lib/liblockfile.so* $(TARGET_DIR)/usr/lib
 endef
 
-define LIBLOCKFILE_CLEAN_CMDS
-	rm -f $(TARGET_DIR)/usr/lib/liblockfile.so*
-	rm -f $(STAGING_DIR)/usr/lib/liblockfile*
-	rm -f $(addprefix $(STAGING_DIR)/usr/include/,lockfile.h mailfile.h)
-	-$(MAKE) -C $(@D) clean
-endef
-
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

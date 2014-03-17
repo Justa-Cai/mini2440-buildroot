@@ -1,8 +1,8 @@
-#############################################################
+################################################################################
 #
 # heirloom-mailx
 #
-#############################################################
+################################################################################
 
 HEIRLOOM_MAILX_VERSION = 12.5
 HEIRLOOM_MAILX_SOURCE  = heirloom-mailx_$(HEIRLOOM_MAILX_VERSION).orig.tar.gz
@@ -29,4 +29,4 @@ define HEIRLOOM_MAILX_INSTALL_TARGET_CMDS
 		install
 endef
 
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))

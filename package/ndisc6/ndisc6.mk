@@ -1,8 +1,8 @@
-#############################################################
+################################################################################
 #
 # ndisc6
 #
-#############################################################
+################################################################################
 
 NDISC6_VERSION = 1.0.2
 NDISC6_SOURCE = ndisc6-$(NDISC6_VERSION).tar.bz2
@@ -10,8 +10,8 @@ NDISC6_SITE = http://www.remlab.net/files/ndisc6/
 NDISC6_CONF_ENV = CC="$(TARGET_CC) -std=gnu99"
 NDISC6_CONF_OPT = --localstatedir=/var --disable-rpath --disable-suid-install
 
-ifeq ($(BR2_PACKAGE_LIBINTL),y)
-NDISC6_DEPENDENCIES += libintl
+ifeq ($(BR2_NEEDS_GETTEXT_IF_LOCALE),y)
+NDISC6_DEPENDENCIES += gettext
 NDISC6_CONF_ENV += LDFLAGS="$(TARGET_LDFLAGS) -lintl"
 endif
 
@@ -39,4 +39,4 @@ endef
 
 NDISC6_POST_INSTALL_TARGET_HOOKS += NDISC6_REMOVE_UNNEEDED
 
-$(eval $(call AUTOTARGETS))
+$(eval $(autotools-package))

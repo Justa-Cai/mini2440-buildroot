@@ -1,11 +1,13 @@
-#############################################################
+################################################################################
 #
 # fmtools
 #
-#############################################################
+################################################################################
 
 FMTOOLS_VERSION = 1.0.2
 FMTOOLS_SITE = http://www.stanford.edu/~blp/fmtools/
+FMTOOLS_LICENSE = GPLv2+
+FMTOOLS_LICENSE_FILES = COPYING
 
 define FMTOOLS_BUILD_CMDS
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(@D)
@@ -16,4 +18,4 @@ define FMTOOLS_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/fmscan $(TARGET_DIR)/usr/sbin/fmscan
 endef
 
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))

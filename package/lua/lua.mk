@@ -1,164 +1,91 @@
-#############################################################
+################################################################################
 #
 # lua
 #
-#############################################################
+################################################################################
 
-LUA_VERSION = 5.1.4
+ifeq ($(BR2_PACKAGE_LUA_5_2),y)
+LUA_VERSION = 5.2.3
+else
+LUA_VERSION = 5.1.5
+endif
 LUA_SITE = http://www.lua.org/ftp
 LUA_INSTALL_STAGING = YES
+LUA_LICENSE = MIT
+LUA_LICENSE_FILES = COPYRIGHT
 
-ifeq ($(BR2_PACKAGE_LUA_SHARED_LIBRARY),y)
-	LUA_MYCFLAGS += -fPIC
+LUA_CFLAGS = -Wall -fPIC -DLUA_USE_POSIX
+
+ifeq ($(BR2_PACKAGE_LUA_5_2),y)
+LUA_CFLAGS += -DLUA_COMPAT_ALL
+ifneq ($(BR2_LARGEFILE),y)
+LUA_CFLAGS += -D_FILE_OFFSET_BITS=32
+endif
 endif
 
-LUA_MYLIBS += -ldl
+ifeq ($(BR2_PREFER_STATIC_LIB),y)
+	LUA_BUILDMODE = static
+else
+	LUA_BUILDMODE = dynamic
+	LUA_CFLAGS += -DLUA_USE_DLOPEN
+	LUA_MYLIBS += -ldl
+endif
 
 ifeq ($(BR2_PACKAGE_LUA_INTERPRETER_READLINE),y)
 	LUA_DEPENDENCIES = readline ncurses
 	LUA_MYLIBS += -lreadline -lhistory -lncurses
-	LUA_MYCFLAGS += -DLUA_USE_LINUX
+	LUA_CFLAGS += -DLUA_USE_READLINE
 else
-	LUA_MYCFLAGS += -DLUA_USE_POSIX -DLUA_USE_DLOPEN
+ifeq ($(BR2_PACKAGE_LUA_INTERPRETER_LINENOISE),y)
+	LUA_DEPENDENCIES = linenoise
+	LUA_MYLIBS += -llinenoise
+	LUA_CFLAGS += -DLUA_USE_LINENOISE
+endif
 endif
 
+# We never want to have host-readline and host-ncurses as dependencies
+# of host-lua.
 HOST_LUA_DEPENDENCIES =
-HOST_LUA_MYCFLAGS = -fPIC -DLUA_USE_DLOPEN -DLUA_USE_POSIX
+HOST_LUA_CFLAGS = -Wall -fPIC -DLUA_USE_DLOPEN -DLUA_USE_POSIX
 HOST_LUA_MYLIBS = -ldl
 
+ifeq ($(BR2_PACKAGE_LUA_5_2),y)
+HOST_LUA_CFLAGS += -DLUA_COMPAT_ALL
+endif
+
 define LUA_BUILD_CMDS
-	sed -i -e 's/-O2//' $(@D)/src/Makefile
-	sed -i -e 's/\/usr\/local/\/usr/' $(@D)/etc/lua.pc
 	$(MAKE) \
 	CC="$(TARGET_CC)" RANLIB="$(TARGET_RANLIB)" \
-	MYCFLAGS="$(TARGET_CFLAGS) $(LUA_MYCFLAGS)" \
+	CFLAGS="$(TARGET_CFLAGS) $(LUA_CFLAGS)" \
 	MYLIBS="$(LUA_MYLIBS)" AR="$(TARGET_CROSS)ar rcu" \
+	BUILDMODE=$(LUA_BUILDMODE) \
 	PKG_VERSION=$(LUA_VERSION) -C $(@D)/src all
 endef
 
 define HOST_LUA_BUILD_CMDS
-	sed -i -e 's/-O2//' $(@D)/src/Makefile
-	sed -i -e 's/\/usr\/local/\/usr/' $(@D)/etc/lua.pc
 	$(MAKE) \
-	MYCFLAGS="$(HOST_LUA_MYCFLAGS)" \
+	CFLAGS="$(HOST_LUA_CFLAGS)" \
+	MYLDFLAGS="$(HOST_LDFLAGS)" \
 	MYLIBS="$(HOST_LUA_MYLIBS)" \
+	BUILDMODE=static \
 	PKG_VERSION=$(LUA_VERSION) -C $(@D)/src all
 endef
 
-ifeq ($(BR2_PACKAGE_LUA_SHARED_LIBRARY),y)
-define LUA_INSTALL_STAGING_SHARED_LIB
-	$(INSTALL) -D $(@D)/src/liblua.so.$(LUA_VERSION) \
-		$(STAGING_DIR)/usr/lib/liblua.so.$(LUA_VERSION)
-	ln -sf liblua.so.$(LUA_VERSION) $(STAGING_DIR)/usr/lib/liblua.so
-endef
-endif
-
 define LUA_INSTALL_STAGING_CMDS
+	$(MAKE) INSTALL_TOP="$(STAGING_DIR)/usr" -C $(@D) install
 	$(INSTALL) -m 0644 -D $(@D)/etc/lua.pc \
 		$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc
-	$(INSTALL) $(@D)/src/liblua.a $(STAGING_DIR)/usr/lib
-	$(INSTALL) $(@D)/src/lua $(STAGING_DIR)/usr/bin
-	$(INSTALL) $(@D)/src/luac $(STAGING_DIR)/usr/bin
-	$(INSTALL) $(@D)/src/lua.h $(STAGING_DIR)/usr/include
-	$(INSTALL) $(@D)/src/luaconf.h $(STAGING_DIR)/usr/include
-	$(INSTALL) $(@D)/src/lualib.h $(STAGING_DIR)/usr/include
-	$(INSTALL) $(@D)/src/lauxlib.h $(STAGING_DIR)/usr/include
 endef
-
-ifeq ($(BR2_PACKAGE_LUA_INTERPRETER),y)
-define LUA_INSTALL_INTERPRETER
-	$(INSTALL) $(@D)/src/lua $(TARGET_DIR)/usr/bin
-endef
-endif
-
-ifeq ($(BR2_PACKAGE_LUA_COMPILER),y)
-define LUA_INSTALL_COMPILER
-	$(INSTALL) $(@D)/src/luac $(TARGET_DIR)/usr/bin
-endef
-endif
-
-ifeq ($(BR2_PACKAGE_LUA_SHARED_LIBRARY),y)
-define LUA_INSTALL_LIBRARY
-	$(INSTALL) $(@D)/src/liblua.so.$(LUA_VERSION) \
-		$(TARGET_DIR)/usr/lib/liblua.so.$(LUA_VERSION)
-	ln -sf liblua.so.$(LUA_VERSION) $(TARGET_DIR)/usr/lib/liblua.so
-	$(INSTALL) $(@D)/src/liblua.a $(TARGET_DIR)/usr/lib/liblua.a
-endef
-else
-define LUA_INSTALL_LIBRARY
-	$(INSTALL) $(@D)/src/liblua.a $(TARGET_DIR)/usr/lib/liblua.a
-endef
-endif
-
-ifeq ($(BR2_HAVE_DEVFILES),y)
-define LUA_INSTALL_DEVFILES
-	$(INSTALL) -m 0644 -D $(@D)/etc/lua.pc \
-		$(TARGET_DIR)/usr/lib/pkgconfig/lua.pc
-	$(INSTALL) $(@D)/src/lua.h $(TARGET_DIR)/usr/include
-	$(INSTALL) $(@D)/src/luaconf.h $(TARGET_DIR)/usr/include
-	$(INSTALL) $(@D)/src/lualib.h $(TARGET_DIR)/usr/include
-	$(INSTALL) $(@D)/src/lauxlib.h $(TARGET_DIR)/usr/include
-endef
-endif
 
 define LUA_INSTALL_TARGET_CMDS
-	$(LUA_INSTALL_INTERPRETER)
-	$(LUA_INSTALL_COMPILER)
-	$(LUA_INSTALL_LIBRARY)
-	$(LUA_INSTALL_DEVFILES)
+	$(MAKE) INSTALL_TOP="$(TARGET_DIR)/usr" -C $(@D) install
 endef
 
 define HOST_LUA_INSTALL_CMDS
-	$(INSTALL) $(@D)/src/lua $(HOST_DIR)/usr/bin
-	$(INSTALL) $(@D)/src/luac $(HOST_DIR)/usr/bin
-	$(INSTALL) $(@D)/src/liblua.so.$(LUA_VERSION) \
-		$(HOST_DIR)/usr/lib/liblua.so.$(LUA_VERSION)
-	ln -sf liblua.so.$(LUA_VERSION) $(HOST_DIR)/usr/lib/liblua.so
-	$(INSTALL) $(@D)/src/liblua.a $(HOST_DIR)/usr/lib/liblua.a
+	$(MAKE) INSTALL_TOP="$(HOST_DIR)/usr" -C $(@D) install
 	$(INSTALL) -m 0644 -D $(@D)/etc/lua.pc \
 		$(HOST_DIR)/usr/lib/pkgconfig/lua.pc
-	$(INSTALL) $(@D)/src/lua.h $(HOST_DIR)/usr/include
-	$(INSTALL) $(@D)/src/luaconf.h $(HOST_DIR)/usr/include
-	$(INSTALL) $(@D)/src/lualib.h $(HOST_DIR)/usr/include
-	$(INSTALL) $(@D)/src/lauxlib.h $(HOST_DIR)/usr/include
 endef
 
-LUA_INSTALLED_FILES = \
-	/usr/include/lua.h \
-	/usr/include/luaconf.h \
-	/usr/include/lualib.h \
-	/usr/include/lauxlib.h \
-	/usr/lib/pkgconfig/lua.pc \
-	/usr/bin/lua \
-	/usr/bin/luac \
-	/usr/lib/liblua.a \
-	/usr/lib/liblua.so*
-
-define LUA_UNINSTALL_STAGING_CMDS
-	for i in $(LUA_INSTALLED_FILES); do \
-		rm -f $(STAGING_DIR)$$i; \
-	done
-endef
-
-define LUA_UNINSTALL_TARGET_CMDS
-	for i in $(LUA_INSTALLED_FILES); do \
-		rm -f $(TARGET_DIR)$$i; \
-	done
-endef
-
-define HOST_LUA_UNINSTALL_TARGET_CMDS
-	for i in $(LUA_INSTALLED_FILES); do \
-		rm -f $(HOST_DIR)$$i; \
-	done
-endef
-
-define LUA_CLEAN_CMDS
-	-$(MAKE) -C $(@D) clean
-endef
-
-define HOST_LUA_CLEAN_CMDS
-	-$(MAKE) -C $(@D) clean
-endef
-
-$(eval $(call GENTARGETS))
-$(eval $(call GENTARGETS,host))
+$(eval $(generic-package))
+$(eval $(host-generic-package))

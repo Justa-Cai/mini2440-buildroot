@@ -1,8 +1,9 @@
-#############################################################
+################################################################################
 #
 # libaio
 #
-#############################################################
+################################################################################
+
 LIBAIO_VERSION = 0.3.109
 LIBAIO_SOURCE = libaio_$(LIBAIO_VERSION).orig.tar.gz
 LIBAIO_SITE = http://snapshot.debian.org/archive/debian/20110227T085214Z/pool/main/liba/libaio/
@@ -20,5 +21,4 @@ define LIBAIO_INSTALL_TARGET_CMDS
   $(TARGET_CONFIGURE_OPTS) $(TARGET_MAKE_ENV) $(MAKE) -C $(@D) DESTDIR=$(TARGET_DIR) install
 endef
 
-$(eval $(call GENTARGETS))
-
+$(eval $(generic-package))
