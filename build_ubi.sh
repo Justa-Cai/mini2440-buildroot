@@ -15,7 +15,8 @@ DEST_IMAGE=${PWD_PATH}/rootfs.ubi
 rm -fv ${DEST_IMAGE}
 
 # mkfs.ubifs 生成的镜像只能用于ubi分区的烧写，如果是要写入MTD分区，需要使用ubinize工具转换
-chown -R root:root ${SRC_PATH} 
+sudo chown -R root:root ${SRC_PATH} 
+sudo chmod 777 -R ${SRC_PATH} 
 ls -l ${SRC_PATH}/bin/busybox 
 mkfs.ubifs -m ${PAGE_SIZE} -e ${BLOCK_SIZE} -c ${MAX_ERASE_SIZE} -r ${SRC_PATH} ${DEST_IMAGE}
 
