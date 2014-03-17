@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e 
-[ ! -f .config ] && cp -av mini2440_defconfig .config
+[ ! -f .config ] && cp -av Tiny210_defconfig .config
 make 
